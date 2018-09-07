@@ -1,11 +1,10 @@
-# AMI Base Images
+# AMI Images
 
 ## Setup
 
-Install the [packer](https://www.packer.io) v1.2.3 release.
+Install the [packer](https://www.packer.io) v1.2.5 release.
 
 ## Usage
-
 
 First build core,
 
@@ -26,6 +25,13 @@ Forgot the ID? Try this:
 ```sh
 cd core
 egrep "${AWS_REGION}\:\sami\-" build.log | cut -d' ' -f2 > ami_id.txt
+```
+
+### List available RHEL images
+
+```sh
+REGION=changeme \
+&& aws ec2 describe-images --owners 309956199498 --query 'Images[*].[CreationDate,Name,ImageId]' --filters "Name=name,Values=RHEL-7.?*GA*" --region $REGION --output table | sort -r
 ```
 
 ### Example `vars.json` files
