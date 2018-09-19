@@ -1,0 +1,7 @@
+---
+
+- name: wetty
+  service: name=wetty state=restarted
+
+- name: sshd
+  service: name=sshd state=restarted
