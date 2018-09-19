@@ -5,7 +5,7 @@
 
 - name: Create generic users dictionary
   set_fact:
-    #generic_users: '{{generic_users|combine( {"name": generic_user_prefix+item, "admin":false, "password": generic_user_password} ) }}'  
+    #generic_users: '{{generic_users|combine( {"name": generic_user_prefix+item, "admin":false, "password": generic_user_password} ) }}'
     generic_users: "{{ generic_users|default([]) + [ {'name': generic_user_prefix + item, 'admin': false, 'password': generic_user_password} ] }}"
   with_sequence: count={{generic_user_count}} format="%02d"
   when: create_generic_user
@@ -15,7 +15,13 @@
   with_items: "{{ generic_users }}"
   when: create_generic_user
 
-- name: Add password for cockpit
+- name: Add generic users
+  shell: /usr/bin/htpasswd -b {{ htpasswd_path }} {{ generic_user_prefix }}{{ item }} {{ generic_pass_prefix }}{{ item }}
+  with_sequence: count={{ generic_user_count }}
+  become: true
+  when: create_generic_user
+
+- name: Add cockpit password
   user:
     name: "{{amazon_user}}"
     password: "{{ cockpit_password | password_hash('sha512') }}"
