@@ -20,18 +20,17 @@
   pre_tasks:
     - name: Verify Ansible Version
       assert:
-        that: 
+        that:
           - "ansible_version.major == 2"
           - "ansible_version.minor >= 4"
         msg: "This script is only supported with the 2.4.1 version or later of Ansible"
-    
+
     - name: Verify App Nodes For Gluster
       assert:
-        that: 
+        that:
           - "app_nodes >= 3"
         msg: "To install gluster you must have at least three app nodes defined, only {{app_nodes}} defined in variables"
       when: install_gluster
-
 
     - fail: msg="Variables required to register subscriptions are missing, please confirm that either rhsm_username, rhsm_password and rhsm_pool OR rhsm_key_id and rhsm_org_id is defined"
       when: (deployment_type == 'openshift-enterprise') and not (((rhsm_username is defined) and (rhsm_password is defined) and (rhsm_pool is defined)) or ((rhsm_key_id is defined) and (rhsm_org_id is defined)))
@@ -55,8 +54,7 @@
   vars:
     state: 'present'
 
-  roles:    
-
+  roles:
   - {role: register-virtual-machines, when: deployment_type == 'openshift-enterprise'}
   - update-virtual-machines
 
@@ -71,7 +69,7 @@
   vars_files:
     - vars/aws-config.yml
 
-  roles:    
+  roles:
   - define-derived-vars
   - {role: generate-ssl-certs, when: use_lets_encrypt}
 
@@ -102,6 +100,7 @@
       with_items:
         - "{{master_ssl_cert_file}}"
         - "{{master_ssl_key_file}}"
+        - "{{master_ssl_ca_file}}"
       when: master_ssl_cert_file is defined
 
     - name: copy wildcard SSL certificates to bastion
@@ -178,9 +177,9 @@
   - {role: grafana-install, when: install_grafana}
 
 #############################################################
-# Post-install tasks 
+# Post-install tasks
 #############################################################
-- name: Post-Install tasks 
+- name: Post-Install tasks
   hosts: master
   remote_user: "{{ amazon_user }}"
 
@@ -190,7 +189,7 @@
   post_tasks:
    - name: SSL certificate information
      debug:
-       msg: 
+       msg:
          - 'SSL certificates have been generated using letsencrypt and backed up locally:'
          - '\tcerts/letsencrypt\n'
          - 'Note that letsencrypt is rate limited to 20 requests a week and SSL certificates last for 90 days.'
@@ -198,6 +197,7 @@
          - 'setting the following variables in vars/aws_config.yml'
          - '\tmaster_ssl_cert_file: "{{master_ssl_cert_file}}"'
          - '\tmaster_ssl_key_file: "{{master_ssl_key_file}}"'
+         - '\master_ssl_ca_file: "{{master_ssl_ca_file}}"'
          - '\wildcard_ssl_cert_file: "{{wildcard_ssl_cert_file}}"'
          - '\twildcard_ssl_key_file: "{{wildcard_ssl_key_file}}"'
          - '\twildcard_ssl_fullchain_file: "{{wildcard_ssl_fullchain_file}}"'
@@ -208,6 +208,7 @@
   - add-users
   - {role: update-ssl-cockpit, when: master_ssl_cert_file is defined}
   - {role: disable-service-catalog, when: disable_service_catalog}
+  - {role: wetty-install, when: master_ssl_cert_file is defined}
 
 #############################################################
 # Output environment information
@@ -224,7 +225,7 @@
   post_tasks:
    - name: Confirmation message
      debug:
-      msg: 
+      msg:
         - 'The script has completed successfully.'
         - 'Master public IP: {{master_public_ip}}'
         - 'OpenShift console: https://{{public_master_dns}}:8443'
