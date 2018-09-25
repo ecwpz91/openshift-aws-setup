@@ -1,6 +1,6 @@
 ---
 
-- name: create DNS zone for openshift
+- name: provision private dns zone
   route53_zone:
      zone: "{{dns_zone}}"
      state: "present"
@@ -9,64 +9,6 @@
      comment: "Internal zone for Openshift"
   register: aws_zone
 
-- name: add bastion dns
-  route53:
-    zone: "{{dns_zone}}"
-    record: "bastion.{{dns_zone}}"
-    type: A
-    ttl: 300
-    value: "{{bastion_private_ip}}"
-    wait: yes
-    vpc_id: "{{vpc_id}}"
-    private_zone: true
-    command: "create"
-    overwrite: yes
-
-- name: add master dns 
-  route53:
-    zone: "{{dns_zone}}"
-    record: "master.{{dns_zone}}"
-    type: A
-    ttl: 300
-    value: "{{master_private_ip}}"
-    wait: yes
-    vpc_id: "{{vpc_id}}"
-    private_zone: true
-    command: "create"
-    overwrite: yes
-
-- name: add node dns 
-  route53:
-    zone: "{{dns_zone}}"
-    record: "node{{item.index}}.{{dns_zone}}"
-    type: A
-    ttl: 300
-    value: "{{item.private_ip}}"
-    wait: yes
-    vpc_id: "{{vpc_id}}"
-    private_zone: true
-    command: "create"
-    overwrite: yes
-  with_items: "{{ nodes }}"
-
-- name: add public dns
-  route53:
-    zone: "{{public_dns_zone}}"
-    record: "{{public_master_dns}}"
-    type: A
-    ttl: 300
-    value: "{{master_public_ip}}"
-    wait: yes
-    command: "create"
-    overwrite: yes
-
-- name: add public wildcard dns
-  route53:
-    zone: "{{public_dns_zone}}"
-    record: "*.{{public_subdomain_prefix}}.{{public_dns_zone}}"
-    type: A
-    ttl: 300
-    value: "{{master_public_ip}}"
-    wait: yes
-    command: "create"
-    overwrite: yes
+- name: set private dns zone facts
+  set_fact:
+   private_zone: "{{aws_zone}}"
