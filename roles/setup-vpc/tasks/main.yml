@@ -1,5 +1,5 @@
 ---
- 
+
 - name: provision vpc
   ec2_vpc_net:
     name: "{{namespace}}-vpc"
@@ -44,10 +44,10 @@
     state: "present"
   register: route_facts
 
-- name: register vpc facts
+- name: set vpc facts
   set_fact:
    vpc_id: "{{vpc_facts['vpc']['id']}}"
 
-- name: set availability zone fact
+- name: set availability zone facts
   set_fact:
     availability_zone: "{{subnet_facts['subnet']['availability_zone']}}"
