@@ -1,0 +1,138 @@
+---
+
+#############################################################
+# Provision AWS Infrastructure
+#############################################################
+- name: provision bastion host
+  hosts: localhost
+
+  vars_files:
+    - vars/aws-config.yml
+
+  roles:
+  - define-derived-vars
+  - setup-vpc
+  - setup-security-groups
+  - setup-vms
+  - setup-vms-bastion
+  - setup-dns
+  - setup-dns-bastion
+  - setup-ssh
+  - setup-ssh-bastion
+
+  pre_tasks:
+    - name: verify ansible version
+      assert:
+        that:
+          - "ansible_version.major == 2"
+          - "ansible_version.minor >= 4"
+        msg: "This script is only supported with the 2.4.1 version or later of Ansible"
+
+    - name: verify gluster prerequisites
+      assert:
+        that:
+          - "app_nodes >= 3"
+        msg: "To install gluster you must have at least three app nodes defined, only {{app_nodes}} defined in variables"
+      when: install_gluster
+
+    - fail: msg="Variables required to register subscriptions are missing, please confirm that either rhsm_username, rhsm_password and rhsm_pool OR rhsm_key_id and rhsm_org_id is defined"
+      when: (deployment_type == 'openshift-enterprise') and not (((rhsm_username is defined) and (rhsm_password is defined) and (rhsm_pool is defined)) or ((rhsm_key_id is defined) and (rhsm_org_id is defined)))
+
+#TODO:
+#-Cache in-memory inventory
+
+#############################################################
+# Register/Update Virtual Machines
+#############################################################
+- name: setup virtual machine hosts
+  hosts: localhost
+
+  vars_files:
+    - vars/aws-config.yml
+
+- name: Register and update virtual machines
+  hosts: created_vms
+  remote_user: "{{ amazon_user }}"
+
+  vars_files:
+    - vars/aws-config.yml
+
+  vars:
+    state: 'present'
+
+  roles:
+  - {role: register-virtual-machines, when: deployment_type == 'openshift-enterprise'}
+  - update-virtual-machines
+  - openshift-pre-reqs
+
+#############################################################
+# Lets Encrypt Certificates
+#############################################################
+- name: generate ssl certificates
+  hosts: localhost
+  remote_user: "{{ amazon_user }}"
+
+  vars_files:
+    - vars/aws-config.yml
+
+  roles:
+  - define-derived-vars
+  - {role: generate-ssl-certs, when: use_lets_encrypt }
+
+  pre_tasks:
+    - name: create directory for certs
+      file: path=certs/{{public_master_dns}} state=directory
+
+    - name: create directory for certs
+      file: path=certs/{{public_subdomain_prefix}}.{{public_dns_zone}} state=directory
+
+  post_tasks:
+   - name: copy master ssl certificates
+     copy:
+       src: "{{item}}"
+       dest: certs/{{public_master_dns}}/{{item | basename}}
+     with_items:
+       - "{{master_ssl_cert_file}}"
+       - "{{master_ssl_key_file}}"
+       - "{{master_ssl_ca_file}}"
+     when: master_ssl_cert_file is defined
+
+   - name: copy wildcard ssl certificates
+     copy:
+       src: "{{item}}"
+       dest: certs/{{public_subdomain_prefix}}.{{public_dns_zone}}/{{item | basename}}
+     with_items:
+       - "{{wildcard_ssl_cert_file}}"
+       - "{{wildcard_ssl_key_file}}"
+       - "{{wildcard_ssl_fullchain_file}}"
+     when: wildcard_ssl_cert_file is defined
+
+#############################################################
+# Configure Bastion Host System
+#############################################################
+#TODO:
+#-Install AWS CLI
+#-Install Packer CLI
+#-Setup AWS credentials
+#-Copy aws-config.yml file
+#-Run ansible playbook
+
+#############################################################
+# Output Environment Information
+#############################################################
+- name: display openshift information
+  hosts: localhost
+
+  vars_files:
+    - vars/aws-config.yml
+
+  roles:
+  - define-derived-vars
+
+  post_tasks:
+   - name: confirmation message
+     debug:
+      msg:
+        - 'The script has completed successfully.'
+        - 'Master public IP: {{master_public_ip}}'
+        - 'OpenShift console: https://{{public_master_dns}}:8443'
