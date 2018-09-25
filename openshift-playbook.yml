@@ -1,31 +1,35 @@
 ---
+
 #############################################################
-# Provision AWS infrastructure
+# Provision AWS Infrastructure
 #############################################################
-- name: Create Infrastructure
-  hosts: local
+- name: provision openshift infrastructure
+  hosts: localhost
 
   vars_files:
     - vars/aws-config.yml
 
   roles:
   - define-derived-vars
-  - setup-vpc
-  - setup-security-groups
-  - setup-virtual-machines
+  - setup-vms
+  - setup-vms-master
+  - setup-vms-nodes
   - setup-dns
+  - setup-dns-master
+  - setup-dns-nodes
   - setup-ssh
-  - setup-host-groups
+  - setup-ssh-master
+  - setup-ssh-nodes
 
   pre_tasks:
-    - name: Verify Ansible Version
+    - name: verify ansible version
       assert:
         that:
           - "ansible_version.major == 2"
           - "ansible_version.minor >= 4"
         msg: "This script is only supported with the 2.4.1 version or later of Ansible"
 
-    - name: Verify App Nodes For Gluster
+    - name: verify gluster prerequisites
       assert:
         that:
           - "app_nodes >= 3"
@@ -35,16 +39,19 @@
     - fail: msg="Variables required to register subscriptions are missing, please confirm that either rhsm_username, rhsm_password and rhsm_pool OR rhsm_key_id and rhsm_org_id is defined"
       when: (deployment_type == 'openshift-enterprise') and not (((rhsm_username is defined) and (rhsm_password is defined) and (rhsm_pool is defined)) or ((rhsm_key_id is defined) and (rhsm_org_id is defined)))
 
+#TODO:
+#-Cache in-memory inventory
+
 #############################################################
-# Register and update virtual machines
+# Register/Update Virtual Machines
 #############################################################
-- name: Setup VM hosts
+- name: setup virtual machine hosts
   hosts: localhost
 
   vars_files:
     - vars/aws-config.yml
 
-- name: Register and update virtual machines
+- name: register and update virtual machines
   hosts: created_vms
   remote_user: "{{ amazon_user }}"
 
@@ -57,88 +64,12 @@
   roles:
   - {role: register-virtual-machines, when: deployment_type == 'openshift-enterprise'}
   - update-virtual-machines
-
-#############################################################
-# Generate SSL certificates using lets encrypt, fetch to
-# local system and then set ssl vars
-#############################################################
-- name: Generate SSL certificates
-  hosts: master
-  remote_user: "{{ amazon_user }}"
-
-  vars_files:
-    - vars/aws-config.yml
-
-  roles:
-  - define-derived-vars
-  - {role: generate-ssl-certs, when: use_lets_encrypt}
-
-#############################################################
-# Copy SSL certificates to bastion
-#############################################################
-- name: Copy SSL certificates to bastion
-  hosts: bastion
-  remote_user: "{{ amazon_user }}"
-
-  vars_files:
-    - vars/aws-config.yml
-
-  roles:
-  - define-derived-vars
-
-  post_tasks:
-    - name: create directory for certs
-      file: path=certs/{{public_master_dns}} state=directory
-
-    - name: create directory for certs
-      file: path=certs/{{public_subdomain_prefix}}.{{public_dns_zone}} state=directory
-
-    - name: copy master SSL certificates to bastion
-      copy:
-        src: "{{item}}"
-        dest: certs/{{public_master_dns}}/{{item | basename}}
-      with_items:
-        - "{{master_ssl_cert_file}}"
-        - "{{master_ssl_key_file}}"
-        - "{{master_ssl_ca_file}}"
-      when: master_ssl_cert_file is defined
-
-    - name: copy wildcard SSL certificates to bastion
-      copy:
-        src: "{{item}}"
-        dest: certs/{{public_subdomain_prefix}}.{{public_dns_zone}}/{{item | basename}}
-      with_items:
-        - "{{wildcard_ssl_cert_file}}"
-        - "{{wildcard_ssl_key_file}}"
-        - "{{wildcard_ssl_fullchain_file}}"
-      when: wildcard_ssl_cert_file is defined
-
-#############################################################
-# Openshift Prerequisites
-#############################################################
-- name: Setup Node hosts
-  hosts: localhost
-
-  vars_files:
-    - vars/aws-config.yml
-
-- name: OpenShift Prerequisites
-  hosts: created_nodes
-  remote_user: "{{ amazon_user }}"
-
-  vars_files:
-    - vars/aws-config.yml
-
-  vars:
-    state: 'present'
-
-  roles:
   - openshift-pre-reqs
 
 #############################################################
-# Gluster Prerequisites
+# Install Gluster Prerequisites
 #############################################################
-- name: Setup gluster master prereqs
+- name: setup gluster requirements
   hosts: master
   remote_user: "{{ amazon_user }}"
 
@@ -159,10 +90,10 @@
   - {role: gluster-node-prereqs, when: install_gluster}
 
 #############################################################
-# Install Openshift
+# Install OpenShift Platform
 #############################################################
-- name: Install OpenShift
-  hosts: bastion
+- name: install openshift environment
+  hosts: localhost
   remote_user: "{{ amazon_user }}"
 
   vars_files:
@@ -177,9 +108,9 @@
   - {role: grafana-install, when: install_grafana}
 
 #############################################################
-# Post-install tasks
+# Post- Installation Tasks
 #############################################################
-- name: Post-Install tasks
+- name: configure openshift environment
   hosts: master
   remote_user: "{{ amazon_user }}"
 
@@ -187,7 +118,7 @@
     - vars/aws-config.yml
 
   post_tasks:
-   - name: SSL certificate information
+   - name: print certificate information
      debug:
        msg:
          - 'SSL certificates have been generated using letsencrypt and backed up locally:'
@@ -208,24 +139,4 @@
   - add-users
   - {role: update-ssl-cockpit, when: master_ssl_cert_file is defined}
   - {role: disable-service-catalog, when: disable_service_catalog}
-  - {role: wetty-install, when: master_ssl_cert_file is defined}
-
-#############################################################
-# Output environment information
-#############################################################
-- name: OpenShift Information
-  hosts: localhost
-
-  vars_files:
-    - vars/aws-config.yml
-
-  roles:
-  - define-derived-vars
-
-  post_tasks:
-   - name: Confirmation message
-     debug:
-      msg:
-        - 'The script has completed successfully.'
-        - 'Master public IP: {{master_public_ip}}'
-        - 'OpenShift console: https://{{public_master_dns}}:8443'
+  - {role: wetty-install, when: install_wetty}
