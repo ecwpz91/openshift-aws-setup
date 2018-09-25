@@ -1,5 +1,6 @@
 ---
-- name: install pre-req packages on nodes
+
+- name: install required packages
   yum:
     name:
       - "wget"
@@ -15,8 +16,40 @@
       - "docker-1.13.1"
       - "ntp"
       - "cockpit"
+      - "dnsmasq"
+    state: "present"
+  register: task_result
+  become: true
+
+- name: install upstream packages
+  yum:
+    name:
+      - "@Development Tools"
+      - "openssl-devel"
+      - "python-devel"
+      - "gcc"
+      - "libffi-devel"
+      - "ansible"
+    state: "present"
+  register: task_result
+  become: true
+  when: deployment_type == 'origin'
+
+- name: install atomic-openshift-utils
+  yum:
+    name:
+      - "atomic-openshift-utils"
     state: "present"
   become: true
+  when: "{{ ocp_version is version('3.9', '<=') }}"
+
+- name: install openshift-ansible
+  yum:
+    name:
+      - "openshift-ansible"
+    state: "present"
+  become: true
+  when: "{{ ocp_version is version('3.10', '>=') }}"
 
 - name: configure docker storage
   template:
@@ -28,13 +61,26 @@
   command: "docker-storage-setup"
   become: true
 
-- name: Update docker options
+- name: update docker options
   shell: "sed -i '/OPTIONS=.*/c\\OPTIONS=\"--selinux-enabled --insecure-registry 172.30.0.0/16\"' /etc/sysconfig/docker"
   become: true
 
-- name: enable docker on master and nodes
+- name: enable docker on boot
   systemd:
      name: docker
      enabled: yes
      state: started
   become: true
+
+- name: reboot server immediately
+  shell: "sleep 5 && /usr/bin/systemctl reboot"
+  async: 1
+  poll: 0
+  become: true
+  ignore_errors: true
+  when: task_result is changed
+
+- name: wait for host to come back
+  pause:
+    minutes: 2
+  when: task_result is changed
