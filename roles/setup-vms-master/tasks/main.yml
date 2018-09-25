@@ -1,0 +1,69 @@
+---
+
+- name: provision master virtual machine
+  ec2:
+    instance_type: "{{master_ami_size}}"
+    image:  "{{image}}"
+    region: "{{region}}"
+    wait: true
+    key_name: "{{aws_key_pair}}"
+    vpc_subnet_id: "{{subnet_facts['subnet']['id']}}"
+    group: ['{{namespace}}-vpc', '{{namespace}}-public-ingress', '{{namespace}}-public-egress', '{{namespace}}-ssh']
+    volumes:
+      - device_name: "{{device_name}}"
+        volume_size: "{{master_root_volume_size}}"
+        volume_type: gp2
+        delete_on_termination: true
+      - device_name: "/dev/xvdb"
+        volume_size: "{{docker_volume_size}}"
+        volume_type: gp2
+        delete_on_termination: true
+    count_tag:
+      Name: "master-{{namespace}}"
+    instance_tags:
+      "{'Name':'master-{{namespace}}','namespace':'{{namespace}}','kubernetes.io/cluster/{{namespace}}':'{{namespace}}'}"
+    exact_count: 1
+  register: ec2_master
+
+- name: provision master elastic ip
+  ec2_eip:
+   device_id: "{{ec2_master['tagged_instances'][0]['id']}}"
+   region: "{{region}}"
+   in_vpc: "yes"
+   release_on_disassociation: true
+  register: master_elastic_ip
+
+- name: set master facts
+  set_fact:
+   master_private_ip: "{{ec2_master['tagged_instances'][0]['private_ip']}}"
+   master_public_ip: "{{master_elastic_ip['public_ip']}}"
+   master_private_dns_name: "{{ec2_master['tagged_instances'][0]['private_dns_name']}}"
+
+- name: wait for master ssh
+  local_action: wait_for
+                host={{ item }}
+                port=22
+                state=started
+  with_items: "{{master_public_ip}}"
+
+- name: add master host
+  add_host:
+    name: "{{ master_public_ip}}"
+    groups: master
+    instance_name: master
+
+- name: add master to created_vms group
+  add_host:
+    name: "{{ item.ip }}"
+    groups: created_vms
+    instance_name: "{{ item.name }}"
+  with_items:
+    - { name: 'master', ip: '{{master_public_ip}}' }
+
+- name: add master to created_nodes in-memory inventory group
+  add_host:
+    name: "{{ item.ip }}"
+    groups: created_nodes
+    instance_name: "{{ item.name }}"
+  with_items:
+    - { name: 'master', ip: '{{master_public_ip}}' }

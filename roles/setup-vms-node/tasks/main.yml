@@ -1,0 +1,78 @@
+---
+
+- name: provision node virtual machine
+  ec2:
+    instance_type: "{{node_ami_size}}"
+    image:  "{{image}}"
+    region: "{{region}}"
+    wait: true
+    key_name: "{{aws_key_pair}}"
+    vpc_subnet_id: "{{subnet_facts['subnet']['id']}}"
+    group: ['{{namespace}}-vpc', '{{namespace}}-public-ingress', '{{namespace}}-public-egress', '{{namespace}}-ssh']
+    volumes:
+      - device_name: "{{device_name}}"
+        volume_size: "{{node_root_volume_size}}"
+        volume_type: gp2
+        delete_on_termination: true
+      - device_name: "/dev/xvdb"
+        volume_size: "{{docker_volume_size}}"
+        volume_type: gp2
+        delete_on_termination: true
+    count_tag:
+      Name: "node{{item}}-{{namespace}}"
+    instance_tags:
+      "{'Name':'node{{item}}-{{namespace}}','namespace':'{{namespace}}','kubernetes.io/cluster/{{namespace}}':'{{namespace}}'}"
+    exact_count: 1
+    assign_public_ip: yes
+  with_sequence: start=1 end={{app_nodes|int}}
+  register: ec2_nodes
+
+# - debug: msg="{{ec2_nodes}}"
+
+- name: provision gluster volumes
+  ec2_vol:
+    instance: "{{item.tagged_instances[0].id}}"
+    volume_size: "{{gluster_volume_size}}"
+    volume_type: gp2
+    device_name: "/dev/xvdc"
+    delete_on_termination: true
+    region: "{{region}}"
+  with_items: "{{ec2_nodes.results[0:3]}}"
+  when: install_gluster
+
+- name: set node facts
+  set_fact:
+    nodes: "{{ nodes|default([]) + [ {'index': item.item, 'public_ip': item.tagged_instances[0].public_ip, 'private_ip': item.tagged_instances[0].private_ip, 'private_dns_name': item.tagged_instances[0].private_dns_name} ] }}"
+  with_items: "{{ec2_nodes.results}}"
+
+# - name: node ip provisioned
+#   debug: msg="{{ nodes }}"
+
+- name: wait for node ssh
+  local_action: wait_for
+                host={{ item.public_ip }}
+                port=22
+                state=started
+  with_items: "{{ nodes }}"
+
+- name: add nodes to created_vms group
+  add_host:
+    name: "{{ item.public_ip }}"
+    groups: created_vms
+    instance_name: "node{{ item.index }}"
+  with_items: "{{ nodes }}"
+
+- name: add nodes to created_nodes group
+  add_host:
+    name: "{{ item.public_ip }}"
+    groups: created_nodes
+    instance_name: "node{{ item.index }}"
+  with_items: "{{ nodes }}"
+
+- name: add gluster hosts
+  add_host:
+    name: "{{ item.public_ip }}"
+    groups: gluster
+    instance_name: "{{ item.index}}"
+  with_items: "{{nodes[0:3]}}"
+  when: install_gluster

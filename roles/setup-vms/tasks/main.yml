@@ -1,0 +1,29 @@
+---
+
+- name: find red hat images
+  ec2_ami_find:
+     name: "{{redhat_ami_name}}"
+     owner: "{{redhat_owner_id}}"
+     architecture: "x86_64"
+     virtualization_type: "hvm"
+     sort: "creationDate"
+     sort_order: "descending"
+     sort_end: 1
+     region: "{{region}}"
+  register: "ami_find"
+  when: ami_id is not defined
+
+- name: find ami id images
+  ec2_ami_find:
+     ami_id: "{{ami_id}}"
+     region: "{{region}}"
+  register: "ami_find"
+  when: ami_id is defined
+
+- name: set image facts
+  set_fact:
+    image: "{{ami_find['results'][0]['ami_id']}}"
+
+- name: set device name facts
+  set_fact:
+    device_name: "{{ami_find['results'][0]['root_device_name']}}"

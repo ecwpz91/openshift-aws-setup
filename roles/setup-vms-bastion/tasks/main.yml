@@ -1,0 +1,59 @@
+---
+
+- name: provision bastion virtual machine
+  ec2:
+    instance_type: "{{bastion_ami_size}}"
+    image:  "{{image}}"
+    region: "{{region}}"
+    wait: true
+    key_name: "{{aws_key_pair}}"
+    vpc_subnet_id: "{{subnet_facts['subnet']['id']}}"
+    group: ['{{namespace}}-vpc', '{{namespace}}-public-ingress', '{{namespace}}-public-egress', '{{namespace}}-ssh']
+    volumes:
+      - device_name: "{{device_name}}"
+        volume_size: "10"
+        volume_type: gp2
+        delete_on_termination: true
+      - device_name: "/dev/xvdb"
+        volume_size: "10"
+        volume_type: gp2
+        delete_on_termination: true
+    count_tag:
+      Name: "bastion-{{namespace}}"
+    instance_tags:
+      Name: "bastion-{{namespace}}"
+      namespace: "{{namespace}}"
+    exact_count: 1
+    assign_public_ip: yes
+  register: ec2_bastion
+
+- name: set bastion facts
+  set_fact:
+   bastion_private_ip: "{{ec2_bastion['tagged_instances'][0]['private_ip']}}"
+   bastion_public_ip: "{{ec2_bastion['tagged_instances'][0]['public_ip']}}"
+
+- name: wait for bastion ssh
+  local_action: wait_for
+                host={{ item }}
+                port=22
+                state=started
+  with_items: "{{bastion_public_ip}}"
+
+- name: add bastion host
+  add_host:
+    name: "{{ bastion_public_ip}}"
+    groups: bastion
+    instance_name: bastion
+    availability_zone: "{{availability_zone}}"
+    # master_private_dns_name: "{{master_private_dns_name}}"
+    public_master_dns: "{{public_master_dns}}"
+    # nodes: "{{ nodes }}"
+    bastion_public_ip: "{{bastion_public_ip}}"
+
+- name: add bastion to created_vms group
+  add_host:
+    name: "{{ item.ip }}"
+    groups: created_vms
+    instance_name: "{{ item.name }}"
+  with_items:
+    - { name: 'bastion', ip: '{{bastion_public_ip}}' }
