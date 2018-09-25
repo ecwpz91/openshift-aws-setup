@@ -1,83 +1,73 @@
 ---
-- name: Add extras and optional repo
-  shell: "yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional"
-  become: true
 
-- name: install epel repository
-  yum:
-    name: "{{epel_repo_url}}"
-    state: present
-  register: result
-  until: result | succeeded
-  retries: 5
-  delay: 10
-  become: true
-
-- name: yum update
-  yum: name=* state=latest
-  register: result
-  until: result | succeeded
-  retries: 3
-  delay: 5      
-  become: true
-
-- name: install pyOpenSSL 16.2 for certbot
-  yum:
-    name: "{{ pyopenssl_url }}"
-    state: present
-  register: result
-  until: result | succeeded
-  retries: 3
-  delay: 10
-  become: true
-
-- name: install certbot
-  yum: 
-    name: 
-      - "certbot"
-      - "python2-certbot-dns-route53"
-    state: present
-  retries: 3
-  delay: 5      
-  become: true
-
-# Generate master SSL certificate
 - name: generate master ssl certificate
-  shell: "certbot certonly -d {{public_master_dns}} --standalone -m {{domain_email_address}} -n --agree-tos"  
+  command: >-
+    docker run --rm --name certbot
+    -v "/etc/letsencrypt:/etc/letsencrypt:z"
+    -v "/var/lib/letsencrypt:/var/lib/letsencrypt:z"
+    -e AWS_ACCESS_KEY_ID={{ lookup('env', 'AWS_ACCESS_KEY_ID') }}
+    -e AWS_SECRET_ACCESS_KEY={{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}
+    certbot/dns-route53 certonly
+    --non-interactive
+    --agree-tos
+    --email "{{ domain_email_address }}"
+    --dns-route53
+    --dns-route53-propagation-seconds 30
+    --domain "{{ public_master_dns }}"
+  args:
+    creates: /etc/letsencrypt/live/{{ public_master_dns }}
   become: true
-  
-# Generate wildcard SSL certificate
+
 - name: generate wildcard ssl certificate
-  shell: "certbot certonly -d *.{{public_subdomain_prefix}}.{{public_dns_zone}} -m {{domain_email_address}} -n --agree-tos --server=https://acme-v02.api.letsencrypt.org/directory --dns-route53"
-  environment:
-    - AWS_ACCESS_KEY_ID: "{{ lookup('env','AWS_ACCESS_KEY_ID') }}"
-    - AWS_SECRET_ACCESS_KEY: "{{ lookup('env','AWS_SECRET_ACCESS_KEY') }}"
+  command: >-
+    docker run --rm --name certbot
+    -v "/etc/letsencrypt:/etc/letsencrypt:z"
+    -v "/var/lib/letsencrypt:/var/lib/letsencrypt:z"
+    -e AWS_ACCESS_KEY_ID={{ lookup('env', 'AWS_ACCESS_KEY_ID') }}
+    -e AWS_SECRET_ACCESS_KEY={{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}
+    certbot/dns-route53 certonly
+    --non-interactive
+    --agree-tos
+    --email "{{ domain_email_address }}"
+    --dns-route53
+    --dns-route53-propagation-seconds 30
+    --server https://acme-v02.api.letsencrypt.org/directory
+    --domain "*.{{public_subdomain_prefix}}.{{public_dns_zone}}"
+  args:
+    creates: /etc/letsencrypt/live/{{public_subdomain_prefix}}.{{public_dns_zone}}
   become: true
 
-- name: disable epel repo
-  shell: "yum erase -y epel-release"
+- name: set access to the certs
+  acl:
+    path: "/etc/letsencrypt"
+    entity: "{{ amazon_user }}"
+    etype: user
+    permissions: rx
+    recursive: yes
+    follow: yes
+    state: present
   become: true
 
-- name: fetch master SSL certificates to local machine
+- name: fetch master ssl certificates
   fetch:
     src: /etc/letsencrypt/live/{{public_master_dns}}/{{item}}
     dest: certs/letsencrypt/{{public_master_dns}}/{{item}}
     flat: true
   become: true
   with_items:
-    - fullchain.pem
-    - privkey.pem
     - cert.pem
     - chain.pem
+    - fullchain.pem
+    - privkey.pem
 
-- name: fetch wildcard SSL certificates to local machine
+- name: fetch wildcard ssl certificates
   fetch:
     src: /etc/letsencrypt/live/{{public_subdomain_prefix}}.{{public_dns_zone}}/{{item}}
     dest: certs/letsencrypt/{{public_subdomain_prefix}}.{{public_dns_zone}}/{{item}}
     flat: true
   become: true
   with_items:
-    - fullchain.pem
-    - privkey.pem
     - cert.pem
     - chain.pem
+    - fullchain.pem
+    - privkey.pem
