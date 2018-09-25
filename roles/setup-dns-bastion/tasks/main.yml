@@ -1,0 +1,14 @@
+---
+
+- name: provision bastion private dns
+  route53:
+    zone: "{{dns_zone}}"
+    record: "bastion.{{dns_zone}}"
+    type: A
+    ttl: 300
+    value: "{{bastion_private_ip}}"
+    wait: yes
+    vpc_id: "{{vpc_id}}"
+    private_zone: true
+    command: "create"
+    overwrite: yes
