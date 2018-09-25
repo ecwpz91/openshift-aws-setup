@@ -88,7 +88,8 @@
         from_port: "123"
         to_port: "123"
         cidr_ip: "0.0.0.0/0"
-# Security group which allows SSH access to a host. Used for the bastion.
+
+# Security group which allows SSH access to a host (used for the bastion).
 - name: create openshift-ssh
   ec2_group:
     name: "{{namespace}}-ssh"
