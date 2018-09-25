@@ -1,26 +1,19 @@
-# Sets up common derived variables that get re-used across different plays, putting them
-# here allows them to be managed centrally.
 ---
-- name: Set master dns
-  set_fact:
-    public_master_dns: "{{prefix_master_dns}}.{{public_dns_zone}}"
-  when: "prefix_master_dns is defined and prefix_master_dns|length>0"
 
-- name: Set master dns
+- name: set master dns facts
   set_fact:
-    public_master_dns: "{{public_dns_zone}}"
-  when: "prefix_master_dns is not defined or prefix_master_dns|length==0"
+    public_master_dns: "{{ prefix_master_dns | default(None) }}{{ (prefix_master_dns == None) | ternary('', '.') }}{{ public_dns_zone }}"
 
-- name: Set master SSL facts for lets encrypt
+- name: set master ssl facts
   set_fact:
-    master_ssl_cert_file: certs/letsencrypt/{{public_master_dns}}/fullchain.pem
-    master_ssl_key_file: certs/letsencrypt/{{public_master_dns}}/privkey.pem
-    master_ssl_ca_file: certs/letsencrypt/{{ public_master_dns }}/cert.pem
+    master_ssl_cert_file: "certs/letsencrypt/{{public_master_dns}}/fullchain.pem"
+    master_ssl_key_file: "certs/letsencrypt/{{public_master_dns}}/privkey.pem"
+    master_ssl_ca_file: "certs/letsencrypt/{{public_master_dns}}/cert.pem"
   when: use_lets_encrypt
 
-- name: Set wildcard SSL facts
+- name: set wildcard ssl facts
   set_fact:
-    wildcard_ssl_cert_file: certs/letsencrypt/{{public_subdomain_prefix}}.{{public_dns_zone}}/cert.pem
-    wildcard_ssl_key_file: certs/letsencrypt/{{public_subdomain_prefix}}.{{public_dns_zone}}/privkey.pem
-    wildcard_ssl_fullchain_file: certs/letsencrypt/{{public_subdomain_prefix}}.{{public_dns_zone}}/fullchain.pem
+    wildcard_ssl_cert_file: "certs/letsencrypt/{{public_subdomain_prefix}}.{{public_dns_zone}}/fullchain.pem"
+    wildcard_ssl_key_file: "certs/letsencrypt/{{public_subdomain_prefix}}.{{public_dns_zone}}/privkey.pem"
+    wildcard_ssl_fullchain_file: "certs/letsencrypt/{{public_subdomain_prefix}}.{{public_dns_zone}}/fullchain.pem"
   when: use_lets_encrypt
