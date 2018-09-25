@@ -1,0 +1,91 @@
+---
+
+- name: install bastion pub key on master
+  authorized_key: user="{{amazon_user}}" key="{{ bastion_rsa_pub.stdout }}"
+  delegate_to: "{{item}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{master_public_ip}}"
+
+- name: run ssh-keyscan to add master to known_hosts
+  command: /usr/bin/ssh-keyscan -t rsa {{ master_private_dns_name }} >> ~/.ssh/known_hosts
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+
+- name: generating master key for ec2-user
+  user: "name={{amazon_user}} generate_ssh_key=yes"
+  delegate_to: "{{master_public_ip}}"
+  remote_user: "{{amazon_user}}"
+
+- name: register master pub key
+  shell: "cat ~/.ssh/id_rsa.pub"
+  delegate_to: "{{master_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  register: "master_rsa_pub"
+
+- name: install master pub key on bastion
+  authorized_key: user="{{amazon_user}}" key="{{ master_rsa_pub.stdout }}"
+  delegate_to: "{{item}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{bastion_public_ip}}"
+
+###########################################################
+# Match hostnames to DNS records
+###########################################################
+- name: set system hostname
+  replace:
+    dest: /etc/hostname
+    regexp: '.*'
+    replace: 'master.{{dns_zone}}'
+    backup: yes
+  register: task_result
+  delegate_to: "{{master_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: set system hostname
+  hostname:
+    name: "master.{{dns_zone}}"
+  delegate_to: "{{master_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: set fully qualified domain name
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '^127\.0\.0\.1'
+    line: '127.0.0.1   master.{{dns_zone}} localhost localhost.localdomain localhost4 localhost4.localdomain4'
+  delegate_to: "{{master_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: read system hostname
+  shell: hostname -F /etc/hostname
+  changed_when: false
+  delegate_to: "{{master_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: append entry to hosts file
+  lineinfile: "dest=/etc/hosts state=present insertafter=EOF line={{ item }}"
+  with_items:
+   - 209.132.183.44  xmlrpc.rhn.redhat.com
+   - 23.204.148.218  content-xmlrpc.rhn.redhat.com
+   - 209.132.183.49  subscription.rhn.redhat.com
+  delegate_to: "{{master_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: reboot server immediately
+  shell: "sleep 5 && /usr/bin/systemctl reboot"
+  async: 1
+  poll: 0
+  delegate_to: "{{master_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+  ignore_errors: true
+
+- name: wait for host to come back
+  pause:
+    minutes: 2

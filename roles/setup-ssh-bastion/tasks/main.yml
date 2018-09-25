@@ -1,0 +1,79 @@
+---
+
+- name: generating bastion key for ec2-user
+  user: "name={{amazon_user}} generate_ssh_key=yes"
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+
+- name: register bastion pub key
+  shell: "cat ~/.ssh/id_rsa.pub"
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  register: "bastion_rsa_pub"
+
+- name: touch bastion known_hosts file
+  file:
+    path: ~/.ssh/known_hosts
+    state: touch
+    mode: "0644"
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+
+- name: set system hostname
+  replace:
+    dest: /etc/hostname
+    regexp: '.*'
+    replace: 'bastion.{{dns_zone}}'
+    backup: yes
+  register: task_result
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: set system hostname
+  hostname:
+    name: "bastion.{{dns_zone}}"
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: set fully qualified domain name
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '^127\.0\.0\.1'
+    line: '127.0.0.1   bastion.{{dns_zone}} localhost localhost.localdomain localhost4 localhost4.localdomain4'
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: read system hostname
+  shell: hostname -F /etc/hostname
+  changed_when: false
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: append entry to hosts file
+  lineinfile: "dest=/etc/hosts state=present insertafter=EOF line={{ item }}"
+  with_items:
+   - 209.132.183.44  xmlrpc.rhn.redhat.com
+   - 23.204.148.218  content-xmlrpc.rhn.redhat.com
+   - 209.132.183.49  subscription.rhn.redhat.com
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+
+- name: reboot server immediately
+  shell: "sleep 5 && /usr/bin/systemctl reboot"
+  async: 1
+  poll: 0
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  become: true
+  ignore_errors: true
+  when: task_result is changed
+
+- name: wait for host to come back
+  pause:
+    minutes: 2
+  when: task_result is changed
