@@ -1,0 +1,36 @@
+---
+
+- name: provision master private dns
+  route53:
+    zone: "{{dns_zone}}"
+    record: "master.{{dns_zone}}"
+    type: A
+    ttl: 300
+    value: "{{master_private_ip}}"
+    wait: yes
+    vpc_id: "{{vpc_id}}"
+    private_zone: true
+    command: "create"
+    overwrite: yes
+
+- name: provision master public dns
+  route53:
+    zone: "{{public_dns_zone}}"
+    record: "{{public_master_dns}}"
+    type: A
+    ttl: 300
+    value: "{{master_public_ip}}"
+    wait: yes
+    command: "create"
+    overwrite: yes
+
+- name: provision master public wildcard dns
+  route53:
+    zone: "{{public_dns_zone}}"
+    record: "*.{{public_subdomain_prefix}}.{{public_dns_zone}}"
+    type: A
+    ttl: 300
+    value: "{{master_public_ip}}"
+    wait: yes
+    command: "create"
+    overwrite: yes
