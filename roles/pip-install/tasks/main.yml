@@ -1,0 +1,9 @@
+---
+
+- name: download python pip
+  command: /usr/bin/curl 'https://bootstrap.pypa.io/get-pip.py' -O chdir=/home/{{amazon_user}}
+  become: true
+
+- name: install python pip
+  command: /usr/bin/python /home/{{amazon_user}}/get-pip.py chdir=/home/{{amazon_user}}
+  become: true

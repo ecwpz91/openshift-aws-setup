@@ -1,0 +1,13 @@
+---
+
+- name: install python awscli
+  pip: name=awscli state=present
+  become: true
+
+- name: install python boto
+  pip: name=boto state=present
+  become: true
+
+- name: install python boto3
+  pip: name=boto3 state=present
+  become: true
