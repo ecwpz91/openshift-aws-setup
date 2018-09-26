@@ -13,7 +13,7 @@
   - define-derived-vars
   - setup-vms
   - setup-vms-master
-  - setup-vms-nodes
+  - setup-vms-node
   - setup-dns
   - setup-dns-master
   - setup-dns-nodes
