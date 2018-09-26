@@ -14,3 +14,6 @@ vault_pass
 aws-credentials
 *.retry
 private*
+
+# let's encrypt
+certs/
