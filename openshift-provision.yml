@@ -120,7 +120,10 @@
   - pip-install
   - awscli-install
   - packer-install
-#TODO:
+
+#[TODO]:
+#-Build core AMI with packer
+#-Build base AMI using core with packer
 #-Setup AWS credentials
 #-Clone git repo
 #-Copy aws-config.yml file
