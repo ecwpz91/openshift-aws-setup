@@ -41,7 +41,7 @@
 
 - name: add bastion host
   add_host:
-    name: "{{ bastion_public_ip}}"
+    name: "{{bastion_public_ip}}"
     groups: bastion
     instance_name: bastion
     availability_zone: "{{availability_zone}}"
