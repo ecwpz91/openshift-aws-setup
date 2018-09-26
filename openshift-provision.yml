@@ -40,7 +40,6 @@
 
   post_tasks:
     - name: insert/update configuration block
-      insertafter: EOF
       blockinfile:
         path: inventory/inventory.cfg
         block: |
