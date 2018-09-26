@@ -109,10 +109,21 @@
 #############################################################
 # Configure Bastion Host System
 #############################################################
+- name: generate ssl certificates
+  hosts: bastion
+  remote_user: "{{ amazon_user }}"
+
+  vars_files:
+    - vars/aws-config.yml
+
+  roles:
+  - define-derived-vars
+  - pip-install
+  - awscli-install
+  - packer-install
 #TODO:
-#-Install AWS CLI
-#-Install Packer CLI
 #-Setup AWS credentials
+#-Clone git repo
 #-Copy aws-config.yml file
 #-Run ansible playbook
 
