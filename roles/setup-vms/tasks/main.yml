@@ -1,29 +1,34 @@
 ---
 
 - name: find red hat images
-  ec2_ami_find:
-     name: "{{redhat_ami_name}}"
-     owner: "{{redhat_owner_id}}"
-     architecture: "x86_64"
-     virtualization_type: "hvm"
-     sort: "creationDate"
-     sort_order: "descending"
-     sort_end: 1
+  ec2_ami_facts:
+     owners: "{{redhat_owner_id}}"
      region: "{{region}}"
+     filters:
+        name: "{{redhat_ami_name}}"
+        architecture: "x86_64"
+        virtualization_type: "hvm"
   register: "ami_find"
   when: ami_id is not defined
 
 - name: find ami id images
-  ec2_ami_find:
-     ami_id: "{{ami_id}}"
+  ec2_ami_facts:
+     image_ids: "{{ami_id}}"
      region: "{{region}}"
   register: "ami_find"
   when: ami_id is defined
 
 - name: set image facts
   set_fact:
-    image: "{{ami_find['results'][0]['ami_id']}}"
+    latest_ami: >
+      {{ ami_find.images | sort(attribute='creation_date') | last }}
+
+# - debug: msg="{{latest_ami}}"
+
+- name: set image facts
+  set_fact:
+    image: "{{latest_ami['image_id']}}"
 
 - name: set device name facts
   set_fact:
-    device_name: "{{ami_find['results'][0]['root_device_name']}}"
+    device_name: "{{latest_ami['root_device_name']}}"
