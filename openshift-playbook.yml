@@ -133,6 +133,7 @@
 
   roles:
   - define-derived-vars
+  - pip-install
   - add-users
   - {role: update-ssl-cockpit, when: master_ssl_cert_file is defined}
   - {role: disable-service-catalog, when: disable_service_catalog}
