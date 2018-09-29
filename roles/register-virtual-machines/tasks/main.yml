@@ -3,7 +3,7 @@
 - name: force unregister before register
   redhat_subscription:
     state: absent
-  ignore_errors: true
+  ignore_errors: yes
   become: true
 
 - name: customer portal registration
