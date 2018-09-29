@@ -21,12 +21,11 @@
   template:
     src: "../files/install-openshift.sh"
     dest: "~{{amazon_user}}/install-openshift.sh"
-    mode: "0775"
-  remote_user: "{{amazon_user}}"
+    mode: 0775
 
 - name: provide details to check installation
   debug:
-   msg: "Check file install-openshift.log in Bastion 'ssh ec2-user@{{bastion_public_ip}}' "
+   msg: "Check file install-openshift.log in Bastion 'ssh {{amazon_user}}@{{bastion_public_ip}}'"
 
 - name: run openshift installation script
   shell: './install-openshift.sh {{deployment_type}}  |& tee install-openshift.log'
