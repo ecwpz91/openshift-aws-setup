@@ -40,7 +40,7 @@
 - name: set access to the certs
   acl:
     path: "/etc/letsencrypt"
-    entity: "{{ amazon_user }}"
+    entity: "{{amazon_user}}"
     etype: user
     permissions: rx
     recursive: yes
