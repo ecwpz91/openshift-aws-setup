@@ -1,5 +1,6 @@
 ---
-- name: Set cert path
+
+- name: set cert path facts
   set_fact:
     cert_path: /home/{{amazon_user}}/certs/{{public_subdomain_prefix}}.{{public_dns_zone}}
 
@@ -18,24 +19,24 @@
   shell: "oc login -u system:admin"
   become: true
 
-- name: Scale router down to zero
-  shell: "oc scale dc/router --replicas=0 -n default && sleep 10" 
+- name: scale router down to zero
+  shell: "oc scale dc/router --replicas=0 -n default && sleep 10"
   become: true
   ignore_errors: true
 
-- name: Remove DEFAULT_CERTIFICATE_PATH environment variable from router
+- name: remove DEFAULT_CERTIFICATE_PATH environment variable from router
   shell: "oc env dc/router DEFAULT_CERTIFICATE_PATH-"
   become: true
 
-- name: Delete router secret
+- name: delete router secret
   shell: "oc delete secret router-certs -n default"
   become: true
 
-- name: Update router secret
+- name: update router secret
   shell: "oc secrets new router-certs tls.crt={{cert_path}}/{{wildcard_ssl_cert_file | basename}} tls.key={{cert_path}}/{{wildcard_ssl_key_file | basename}} --type='kubernetes.io/tls' --confirm -n default"
   become: true
 
-- name: Scale router back to one
-  shell: "oc scale dc/router --replicas=1 -n default && sleep 5" 
+- name: scale router back to one
+  shell: "oc scale dc/router --replicas=1 -n default && sleep 5"
   become: true
   ignore_errors: true
