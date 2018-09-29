@@ -43,14 +43,8 @@
 # Register/Update Virtual Machines
 #############################################################
 - name: setup virtual machine hosts
-  hosts: localhost
-
-  vars_files:
-    - vars/aws-config.yml
-
-- name: register and update virtual machines
   hosts: created_vms
-  remote_user: "{{ amazon_user }}"
+  remote_user: "{{amazon_user}}"
 
   vars_files:
     - vars/aws-config.yml
@@ -68,7 +62,7 @@
 #############################################################
 - name: setup gluster requirements
   hosts: master
-  remote_user: "{{ amazon_user }}"
+  remote_user: "{{amazon_user}}"
 
   vars_files:
     - vars/aws-config.yml
@@ -78,7 +72,7 @@
 
 - name: Setup gluster node prereqs
   hosts: gluster
-  remote_user: "{{ amazon_user }}"
+  remote_user: "{{amazon_user}}"
 
   vars_files:
     - vars/aws-config.yml
@@ -91,7 +85,7 @@
 #############################################################
 - name: install openshift environment
   hosts: localhost
-  remote_user: "{{ amazon_user }}"
+  remote_user: "{{amazon_user}}"
 
   vars_files:
     - vars/aws-config.yml
@@ -109,7 +103,7 @@
 #############################################################
 - name: configure openshift environment
   hosts: master
-  remote_user: "{{ amazon_user }}"
+  remote_user: "{{amazon_user}}"
 
   vars_files:
     - vars/aws-config.yml
