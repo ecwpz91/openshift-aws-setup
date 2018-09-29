@@ -1,0 +1,93 @@
+---
+
+- name: install bastion pub key on nodes
+  authorized_key: user="{{amazon_user}}" key="{{ bastion_rsa_pub.stdout }}"
+  delegate_to: "{{item.public_ip}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{nodes}}"
+
+- name: run ssh-keyscan to add nodes to known_hosts
+  command: /usr/bin/ssh-keyscan -t rsa {{ item.private_dns_name }} >> ~/.ssh/known_hosts
+  delegate_to: "{{bastion_public_ip}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{nodes}}"
+
+- name: install master pub key on nodes
+  authorized_key: user="{{amazon_user}}" key="{{ master_rsa_pub.stdout }}"
+  delegate_to: "{{item.public_ip}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{nodes}}"
+
+- name: set system hostname
+  replace:
+    dest: /etc/hostname
+    regexp: '.*'
+    replace: 'node{{item.index}}.{{dns_zone}}'
+    backup: yes
+  register: task_result
+  delegate_to: "{{item.public_ip}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{nodes}}"
+  become: true
+
+- name: set system hostname
+  hostname:
+    name: "node{{item.index}}.{{dns_zone}}"
+  delegate_to: "{{item.public_ip}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{nodes}}"
+  become: true
+
+- name: set fully qualified domain name
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '^127\.0\.0\.1'
+    line: '127.0.0.1   node{{item.index}}.{{dns_zone}} localhost localhost.localdomain localhost4 localhost4.localdomain4'
+  delegate_to: "{{item.public_ip}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{nodes}}"
+  become: true
+
+- name: read system hostname
+  shell: hostname -F /etc/hostname
+  changed_when: false
+  delegate_to: "{{item.public_ip}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{nodes}}"
+  become: true
+
+- name: append entry to hosts file
+  lineinfile: "dest=/etc/hosts state=present insertafter=EOF line={{ item }}"
+  with_items:
+   - 209.132.183.44  xmlrpc.rhn.redhat.com
+   - 23.204.148.218  content-xmlrpc.rhn.redhat.com
+   - 209.132.183.49  subscription.rhn.redhat.com
+  delegate_to: "{{item.public_ip}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{nodes}}"
+  become: true
+
+- name: reboot server immediately
+  shell: "sleep 5 && /usr/bin/systemctl reboot"
+  async: 1
+  poll: 0
+  delegate_to: "{{item.public_ip}}"
+  remote_user: "{{amazon_user}}"
+  with_items:
+   - "{{nodes}}"
+  become: true
+  ignore_errors: yes
+  when: task_result is changed
+
+- name: wait for host to come back
+  pause:
+    minutes: 2
+  when: task_result is changed
