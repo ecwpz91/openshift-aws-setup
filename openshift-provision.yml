@@ -126,8 +126,6 @@
 #[TODO]:
 #-Build core AMI with packer
 #-Build base AMI using core with packer
-#-Setup AWS credentials
-#-Run ansible playbook
 
 #############################################################
 # Output Environment Information
