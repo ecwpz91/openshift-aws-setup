@@ -27,7 +27,7 @@
       state: absent
       lookup: id
     with_items: "{{ vpc_route_table_facts.route_tables }}"
-    ignore_errors: true
+    ignore_errors: yes
 
   - name: Remove subnets from VPC
     ec2_vpc_subnet:
