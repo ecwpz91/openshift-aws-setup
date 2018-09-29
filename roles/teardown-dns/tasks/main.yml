@@ -13,7 +13,7 @@
 - name: Delete node routes
   include: delete-route.yml zone={{ dns_zone }} record="node{{item}}.{{ dns_zone }}" private_zone="true"
   with_sequence: start=1 end={{app_nodes|int}}
-  ignore_errors: true
+  ignore_errors: yes
 
 # - name: Delete private DNS zone for openshift
 #   route53_zone:
