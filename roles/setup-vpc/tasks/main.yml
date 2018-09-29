@@ -29,6 +29,10 @@
     state: "present"
   register: subnet_facts
 
+- name: set subnet facts
+  set_fact:
+   subnet_id: "{{subnet_facts['subnet']['id']}}"
+
 - name: set up public subnet route table
   ec2_vpc_route_table:
     vpc_id: "{{vpc_facts['vpc']['id']}}"
@@ -36,7 +40,7 @@
       Name: "{{namespace}}-route"
       namespace: "{{namespace}}"
     subnets:
-      - "{{subnet_facts['subnet']['id']}}"
+      - "{{subnet_id}}"
     routes:
       - dest: 0.0.0.0/0
         gateway_id: "{{igw_facts['gateway_id']}}"

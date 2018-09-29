@@ -9,6 +9,7 @@
   blockinfile:
     path: vars/aws-cache.yml
     block: |
+      subnet_id: {{subnet_id}}
       vpc_id: {{vpc_id}}
       availability_zone: {{availability_zone}}
       image: {{image}}

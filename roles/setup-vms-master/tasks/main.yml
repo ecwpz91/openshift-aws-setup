@@ -7,7 +7,7 @@
     region: "{{region}}"
     wait: true
     key_name: "{{aws_key_pair}}"
-    vpc_subnet_id: "{{subnet_facts['subnet']['id']}}"
+    vpc_subnet_id: "{{subnet_id}}"
     group: ['{{namespace}}-vpc', '{{namespace}}-public-ingress', '{{namespace}}-public-egress', '{{namespace}}-ssh']
     volumes:
       - device_name: "{{device_name}}"
