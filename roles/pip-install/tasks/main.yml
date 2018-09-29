@@ -1,9 +1,18 @@
 ---
 
+# - name: verify pip version
+#   command: pip --version
+#   register: pip_version_output
+#   ignore_errors: yes
+#   changed_when: false
+
 - name: download python pip
-  command: /usr/bin/curl 'https://bootstrap.pypa.io/get-pip.py' -O chdir=/home/{{amazon_user}}
+  get_url: url=https://bootstrap.pypa.io/get-pip.py
+           dest=/home/{{amazon_user}}/get-pip.py
+  # when: pip_version_output is failed or not pip_version_output.stdout
   become: true
 
 - name: install python pip
   command: /usr/bin/python /home/{{amazon_user}}/get-pip.py chdir=/home/{{amazon_user}}
+  # when: pip_version_output is failed or not pip_version_output.stdout
   become: true
