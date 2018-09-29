@@ -141,7 +141,7 @@
   command: rpm -q firewalld
   register: rf_result
   become: true
-  ignore_errors: true
+  ignore_errors: yes
 
 - name: turn off firewalld
   systemd:
@@ -155,7 +155,7 @@
   command: service iptables status
   register: ri_result
   become: true
-  ignore_errors: true
+  ignore_errors: yes
   when: rf_result.rc != 0
 
 - name: open iptables port
@@ -262,7 +262,7 @@
   async: 1
   poll: 0
   become: true
-  ignore_errors: true
+  ignore_errors: yes
 
 - name: wait for host to come back
   pause:
