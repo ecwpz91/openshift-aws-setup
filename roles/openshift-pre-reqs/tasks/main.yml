@@ -77,7 +77,7 @@
   async: 1
   poll: 0
   become: true
-  ignore_errors: true
+  ignore_errors: yes
   when: task_result is changed
 
 - name: wait for host to come back
