@@ -5,7 +5,7 @@
     repo: "https://github.com/ecwpz91/openshift-aws-setup"
     dest: "~{{amazon_user}}/openshift-aws-setup"
     version: "develop"
-  ignore_errors: yes
+    force: yes
 
 - name: copy amazon key pair
   copy:
@@ -28,3 +28,16 @@
   copy:
    src: vars/aws-cache.yml
    dest: "~{{amazon_user}}/openshift-aws-setup/vars/aws-cache.yml"
+
+- name: set access key id environment variable
+  lineinfile: dest=~{{amazon_user}}/.bashrc
+              line='export AWS_ACCESS_KEY_ID={{lookup('env','AWS_ACCESS_KEY_ID')}}'
+
+- name: set secret key environment variable
+  lineinfile: dest=~{{amazon_user}}/.bashrc
+              line='export AWS_SECRET_ACCESS_KEY={{lookup('env','AWS_SECRET_ACCESS_KEY')}}'
+
+# - name: run openshift-aws-setup playbook
+#   command: ./openshift-playbook-run.sh -e rhsm_key_id={{rhsm_key_id}} -e rhsm_org_id={{rhsm_org_id}}
+#   args:
+#    chdir: "~{{amazon_user}}/openshift-aws-setup"
