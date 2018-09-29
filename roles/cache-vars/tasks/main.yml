@@ -1,0 +1,74 @@
+---
+
+- name: create vars cache file
+  file:
+   path: "vars/aws-cache.yml"
+   state: touch
+
+- name: cache vpc facts
+  lineinfile: dest="vars/aws-cache.yml"
+              line={{ item.line }}
+              insertafter={{ item.insertafter }}
+  with_items:
+    - { line: "vpc_id: {{ vpc_id }}", insertafter: 'wildcard_ssl_fullchain_file: {{ wildcard_ssl_fullchain_file|replace(".", "\.") }}' }
+
+- name: cache availability zone facts
+  lineinfile: dest="vars/aws-cache.yml"
+              line={{ item.line }}
+              insertafter={{ item.insertafter }}
+  with_items:
+    - { line: "availability_zone: {{ availability_zone }}", insertafter: 'vpc_id: {{ vpc_id|replace(".", "\.") }}' }
+
+# - name: cache latest ami facts
+#   lineinfile: dest="vars/aws-cache.yml"
+#               line={{ item.line }}
+#               insertafter={{ item.insertafter }}
+#   with_items:
+#     - { line: "latest_ami: {{ latest_ami }}", insertafter: 'EOF' }
+
+- name: cache image facts
+  lineinfile: dest="vars/aws-cache.yml"
+              line={{ item.line }}
+              insertafter={{ item.insertafter }}
+  with_items:
+    - { line: "image: {{ image }}", insertafter: 'availability_zone: {{ availability_zone|replace(".", "\.") }}' }
+
+- name: cache device name facts
+  lineinfile: dest="vars/aws-cache.yml"
+              line={{ item.line }}
+              insertafter={{ item.insertafter }}
+  with_items:
+    - { line: "device_name: {{ device_name }}", insertafter: 'image: {{ image|replace(".", "\.") }}' }
+
+# - name: cache private dns zone facts
+#   lineinfile: dest="vars/aws-cache.yml"
+#               line={{ item.line }}
+#               insertafter={{ item.insertafter }}
+#   with_items:
+#     - { line: "private_zone: {{ private_zone }}", insertafter: 'EOF' }
+
+- name: cache bastion facts
+  lineinfile: dest="vars/aws-cache.yml"
+              line={{ item.line }}
+              insertafter={{ item.insertafter }}
+  with_items:
+    - { line: "bastion_private_ip: {{ bastion_private_ip }}", insertafter: 'EOF' }
+    - { line: "bastion_public_ip: {{ bastion_public_ip }}", insertafter: 'bastion_private_ip: {{ bastion_private_ip|replace(".", "\.") }}' }
+
+# - name: cache master facts
+#   lineinfile: dest="vars/aws-cache.yml"
+#               line={{ item.line }}
+#               insertafter={{ item.insertafter }}
+#   with_items:
+#     - { line: "master_private_ip: {{ master_private_ip }}", insertafter: 'EOF' }
+#     - { line: "master_public_ip: {{ master_public_ip }}", insertafter: 'master_private_ip: {{ master_private_ip|replace(".", "\.") }}' }
+#     - { line: "master_private_dns_name: {{ master_private_dns_name }}", insertafter: 'master_public_ip: {{ master_public_ip|replace(".", "\.") }}' }
+
+#[TODO]: Cache node facts
+
+# - name: cache cert path facts
+#   lineinfile: dest="vars/aws-cache.yml"
+#               line={{ item.line }}
+#               insertafter={{ item.insertafter }}
+#   with_items:
+#     - { line: "cert_path: {{ cert_path }}", insertafter: 'EOF' }
