@@ -21,9 +21,6 @@
   with_items:
    - "{{nodes}}"
 
-###########################################################
-# Match hostnames to DNS records
-###########################################################
 - name: set system hostname
   replace:
     dest: /etc/hostname
