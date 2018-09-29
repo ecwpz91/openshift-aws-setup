@@ -30,9 +30,6 @@
   with_items:
    - "{{bastion_public_ip}}"
 
-###########################################################
-# Match hostnames to DNS records
-###########################################################
 - name: set system hostname
   replace:
     dest: /etc/hostname
