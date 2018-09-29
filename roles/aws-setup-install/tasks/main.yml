@@ -1,0 +1,30 @@
+---
+
+- name: checkout openshift-aws-setup repo
+  git:
+    repo: "https://github.com/ecwpz91/openshift-aws-setup"
+    dest: "~{{amazon_user}}/openshift-aws-setup"
+    version: "develop"
+  ignore_errors: yes
+
+- name: copy amazon key pair
+  copy:
+   src: "{{lookup('env','HOME')}}/.ssh/{{aws_key_pair}}"
+   dest: "~{{amazon_user}}/.ssh/{{aws_key_pair}}"
+   mode: 0400
+
+- name: create ssh config file
+  template:
+    src: "../files/config"
+    dest: "~{{amazon_user}}/.ssh/config"
+    mode: 0600
+
+- name: copy aws config file
+  copy:
+   src: vars/aws-config.yml
+   dest: "~{{amazon_user}}/openshift-aws-setup/vars/aws-config.yml"
+
+- name: copy aws cache file
+  copy:
+   src: vars/aws-cache.yml
+   dest: "~{{amazon_user}}/openshift-aws-setup/vars/aws-cache.yml"
