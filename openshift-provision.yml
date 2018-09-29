@@ -3,7 +3,7 @@
 #############################################################
 # Provision AWS Infrastructure
 #############################################################
-- name: provision bastion host
+- name: provision bastion infrastructure
   hosts: localhost
 
   vars_files:
@@ -11,14 +11,15 @@
 
   roles:
   - define-derived-vars
+  - setup-ssh
   - setup-vpc
   - setup-security-groups
   - setup-vms
   - setup-vms-bastion
   - setup-dns
   - setup-dns-bastion
-  - setup-ssh
   - setup-ssh-bastion
+  - cache-vars
 
   pre_tasks:
     - name: verify ansible version
@@ -28,36 +29,26 @@
           - "ansible_version.minor >= 4"
         msg: "This script is only supported with the 2.4.1 version or later of Ansible"
 
-    - name: verify gluster prerequisites
-      assert:
-        that:
-          - "app_nodes >= 3"
-        msg: "To install gluster you must have at least three app nodes defined, only {{app_nodes}} defined in variables"
-      when: install_gluster
-
     - fail: msg="Variables required to register subscriptions are missing, please confirm that either rhsm_username, rhsm_password and rhsm_pool OR rhsm_key_id and rhsm_org_id is defined"
       when: (deployment_type == 'openshift-enterprise') and not (((rhsm_username is defined) and (rhsm_password is defined) and (rhsm_pool is defined)) or ((rhsm_key_id is defined) and (rhsm_org_id is defined)))
 
   post_tasks:
-    - name: insert/update configuration block
-      blockinfile:
-        path: inventory/inventory.cfg
-        block: |
-          [bastion]
-          bastion ansible_ssh_host={{bastion_public_ip}} ansible_user={{amazon_user}}
+      - name: insert/update inventory
+        blockinfile:
+          path: inventory/inventory.cfg
+          block: |
+            [bastion]
+            bastion ansible_ssh_host={{bastion_public_ip}} ansible_user={{amazon_user}}
+
+            [created_vms]
+            bastion ansible_ssh_host={{bastion_public_ip}} ansible_user={{amazon_user}}
 
 #############################################################
-# Register/Update Virtual Machines
+# Register & Update Virtual Machines
 #############################################################
 - name: setup virtual machine hosts
-  hosts: localhost
-
-  vars_files:
-    - vars/aws-config.yml
-
-- name: Register and update virtual machines
   hosts: created_vms
-  remote_user: "{{ amazon_user }}"
+  remote_user: "{{amazon_user}}"
 
   vars_files:
     - vars/aws-config.yml
@@ -75,7 +66,7 @@
 #############################################################
 - name: generate ssl certificates
   hosts: bastion
-  remote_user: "{{ amazon_user }}"
+  remote_user: "{{amazon_user}}"
 
   vars_files:
     - vars/aws-config.yml
@@ -108,9 +99,9 @@
 #############################################################
 # Configure Bastion Host System
 #############################################################
-- name: generate ssl certificates
+- name: setup bastion host
   hosts: bastion
-  remote_user: "{{ amazon_user }}"
+  remote_user: "{{amazon_user}}"
 
   vars_files:
     - vars/aws-config.yml
@@ -120,13 +111,22 @@
   - pip-install
   - awscli-install
   - packer-install
+  - aws-setup-install
+
+  pre_tasks:
+    - name: check vars cache
+      stat:
+       path: vars/aws-cache.yml
+      register: stat_result
+
+    - name: load cached vars
+      include_vars: vars/aws-cache.yml
+      when: stat_result.stat.exists == true
 
 #[TODO]:
 #-Build core AMI with packer
 #-Build base AMI using core with packer
 #-Setup AWS credentials
-#-Clone git repo
-#-Copy aws-config.yml file
 #-Run ansible playbook
 
 #############################################################
