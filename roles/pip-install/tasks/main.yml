@@ -16,3 +16,7 @@
   command: /usr/bin/python /home/{{amazon_user}}/get-pip.py chdir=/home/{{amazon_user}}
   # when: pip_version_output is failed or not pip_version_output.stdout
   become: true
+
+- name: upgrade python pip
+  pip: name=pip state=present
+  become: true
