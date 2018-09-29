@@ -70,7 +70,7 @@
   delegate_to: "{{bastion_public_ip}}"
   remote_user: "{{amazon_user}}"
   become: true
-  ignore_errors: true
+  ignore_errors: yes
   when: task_result is changed
 
 - name: wait for host to come back
