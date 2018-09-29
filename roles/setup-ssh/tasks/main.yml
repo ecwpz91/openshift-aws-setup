@@ -1,5 +1,35 @@
 ---
 
+- name: check key pair exists
+  stat:
+   path: "{{lookup('env','HOME')}}/.ssh/{{aws_key_pair}}"
+  register: stat_result
+
+- name: create new key pair
+  ec2_key:
+   name: "{{aws_key_pair}}"
+   region: "{{region}}"
+   key_material: "{{ item }}"
+   force: false
+  with_file: "{{lookup('env','HOME')}}/.ssh/{{aws_key_pair}}"
+  register: ec2_key_result
+  when: stat_result.stat.exists == true
+
+- name: create new key pair
+  ec2_key:
+   name: "{{aws_key_pair}}"
+   region: "{{region}}"
+  register: ec2_key_result
+  when: stat_result.stat.exists == false
+
+- name: save new private key
+  copy:
+   content: "{{ ec2_key_result.key.private_key }}"
+   dest: "{{lookup('env','HOME')}}/.ssh/{{aws_key_pair}}"
+   mode: 0400
+  when: ec2_key_result.changed or
+        (stat_result.stat.exists == false)
+
 # - name: touch bastion known_hosts file
 #   file:
 #     path: ~/.ssh/known_hosts
