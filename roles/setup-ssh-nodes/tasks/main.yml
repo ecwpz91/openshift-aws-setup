@@ -87,7 +87,7 @@
   with_items:
    - "{{nodes}}"
   become: true
-  ignore_errors: true
+  ignore_errors: yes
   when: task_result is changed
 
 - name: wait for host to come back
