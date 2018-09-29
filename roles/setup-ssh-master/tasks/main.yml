@@ -84,7 +84,7 @@
   delegate_to: "{{master_public_ip}}"
   remote_user: "{{amazon_user}}"
   become: true
-  ignore_errors: true
+  ignore_errors: yes
 
 - name: wait for host to come back
   pause:
