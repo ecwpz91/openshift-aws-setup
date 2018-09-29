@@ -15,9 +15,9 @@
   - setup-vms-master
   - setup-vms-node
   - setup-dns-master
-  - setup-dns-nodes
+  - setup-dns-node
   - setup-ssh-master
-  - setup-ssh-nodes
+  - setup-ssh-node
 
   pre_tasks:
     - name: verify ansible version
