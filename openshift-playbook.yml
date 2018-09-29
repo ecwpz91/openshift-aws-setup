@@ -8,16 +8,14 @@
 
   vars_files:
     - vars/aws-config.yml
+    - vars/aws-cache.yml
 
   roles:
   - define-derived-vars
-  - setup-vms
   - setup-vms-master
   - setup-vms-node
-  - setup-dns
   - setup-dns-master
   - setup-dns-nodes
-  - setup-ssh
   - setup-ssh-master
   - setup-ssh-nodes
 
@@ -48,6 +46,7 @@
 
   vars_files:
     - vars/aws-config.yml
+    - vars/aws-cache.yml
 
   vars:
     state: 'present'
@@ -66,6 +65,7 @@
 
   vars_files:
     - vars/aws-config.yml
+    - vars/aws-cache.yml
 
   roles:
   - {role: gluster-master-prereqs, when: install_gluster}
@@ -89,6 +89,7 @@
 
   vars_files:
     - vars/aws-config.yml
+    - vars/aws-cache.yml
 
   vars:
 #    nodes: "{{ lookup('file','nodes.json') | from_json }}"
@@ -107,6 +108,7 @@
 
   vars_files:
     - vars/aws-config.yml
+    - vars/aws-cache.yml
 
   post_tasks:
    - name: print certificate information
