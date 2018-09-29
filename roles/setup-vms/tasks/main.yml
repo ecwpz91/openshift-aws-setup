@@ -18,12 +18,10 @@
   register: "ami_find"
   when: ami_id is defined
 
-- name: set image facts
+- name: set latest ami facts
   set_fact:
     latest_ami: >
       {{ ami_find.images | sort(attribute='creation_date') | last }}
-
-# - debug: msg="{{latest_ami}}"
 
 - name: set image facts
   set_fact:
