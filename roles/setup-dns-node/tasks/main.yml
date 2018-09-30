@@ -1,6 +1,6 @@
 ---
 
-- name: add node dns
+- name: provision node private dns
   route53:
     zone: "{{dns_zone}}"
     record: "node{{item.index}}.{{dns_zone}}"
