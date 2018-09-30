@@ -49,7 +49,19 @@
       - "openshift-ansible"
     state: "present"
   become: true
-  when: (ocp_version | string) == "3.9"
+  when: (ocp_version | string) == "3.10"
+
+- name: stop ntp service
+  service: name=ntpd state=stop
+  become: true
+
+- name: synchronize server time
+  command: ntpdate -q 0.rhel.pool.ntp.org 1.ro.pool.ntp.org
+  register: myntpdate
+
+- name: start ntp service
+  service: name=ntpd state=started enabled=yes
+  become: true
 
 - name: configure docker storage
   template:
