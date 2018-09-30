@@ -52,7 +52,7 @@
   when: (ocp_version | string) == "3.10"
 
 - name: stop ntp service
-  service: name=ntpd state=stop
+  service: name=ntpd state=stopped
   become: true
 
 - name: synchronize server time
