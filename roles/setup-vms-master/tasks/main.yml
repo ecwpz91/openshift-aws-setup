@@ -46,13 +46,13 @@
                 state=started
   with_items: "{{master_private_ip}}"
 
-- name: add master host
+- name: add master to master in-memory inventory group
   add_host:
     name: "{{master_private_ip}}"
     groups: master
     instance_name: master
 
-- name: add master to created_vms group
+- name: add master to created_vms in-memory inventory group
   add_host:
     name: "{{item.ip}}"
     groups: created_vms
