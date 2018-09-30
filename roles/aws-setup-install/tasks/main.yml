@@ -39,7 +39,7 @@
               regexp='^export AWS_SECRET_ACCESS_KEY'
               line='export AWS_SECRET_ACCESS_KEY={{lookup('env','AWS_SECRET_ACCESS_KEY')}}'
 
-# - name: run openshift-aws-setup playbook
-#   command: ./openshift-playbook-run.sh -e rhsm_key_id={{rhsm_key_id}} -e rhsm_org_id={{rhsm_org_id}}
-#   args:
-#    chdir: "~{{amazon_user}}/openshift-aws-setup"
+- name: run openshift-aws-setup playbook
+  command: ./openshift-playbook-run.sh -e rhsm_key_id={{rhsm_key_id}} -e rhsm_org_id={{rhsm_org_id}}
+  args:
+   chdir: "~{{amazon_user}}/openshift-aws-setup"
