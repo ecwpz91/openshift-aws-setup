@@ -14,7 +14,6 @@
       availability_zone: {{availability_zone}}
       image: {{image}}
       device_name: {{device_name}}
-      private_zone: {{private_zone}}
       bastion_private_ip: {{bastion_private_ip}}
       bastion_public_ip: {{bastion_public_ip}}
 
