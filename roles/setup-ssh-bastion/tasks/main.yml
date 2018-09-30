@@ -11,6 +11,10 @@
   remote_user: "{{amazon_user}}"
   register: "bastion_rsa_pub"
 
+- name: set subnet facts
+  set_fact:
+   bastion_rsa_pub: "{{bastion_rsa_pub.stdout}}"
+
 - name: touch bastion known_hosts file
   file:
     path: ~/.ssh/known_hosts

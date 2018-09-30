@@ -16,6 +16,7 @@
       device_name: {{device_name}}
       bastion_private_ip: {{bastion_private_ip}}
       bastion_public_ip: {{bastion_public_ip}}
+      bastion_rsa_pub: {{bastion_rsa_pub}}
 
 # - name: cache master facts
 #   lineinfile: dest="vars/aws-cache.yml"

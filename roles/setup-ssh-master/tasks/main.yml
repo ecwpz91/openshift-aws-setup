@@ -1,7 +1,7 @@
 ---
 
 - name: install bastion pub key on master
-  authorized_key: user="{{amazon_user}}" key="{{ bastion_rsa_pub.stdout }}"
+  authorized_key: user="{{amazon_user}}" key="{{bastion_rsa_pub}}"
   delegate_to: "{{item}}"
   remote_user: "{{amazon_user}}"
   with_items:
