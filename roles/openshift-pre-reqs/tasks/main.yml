@@ -57,7 +57,7 @@
 
 - name: synchronize server time
   command: ntpdate -q 0.rhel.pool.ntp.org 1.ro.pool.ntp.org
-  register: myntpdate
+  become: true
 
 - name: start ntp service
   service: name=ntpd state=started enabled=yes
