@@ -28,4 +28,6 @@
    msg: "Check file install-openshift.log in Bastion 'ssh {{amazon_user}}@{{bastion_public_ip}}'"
 
 - name: run openshift installation script
-  shell: './install-openshift.sh {{deployment_type}}  |& tee install-openshift.log'
+  command: './install-openshift.sh {{deployment_type}}  |& tee install-openshift.log'
+  args:
+   chdir: "~{{amazon_user}}"
