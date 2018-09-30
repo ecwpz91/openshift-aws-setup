@@ -41,29 +41,29 @@
 
 - name: wait for master ssh
   local_action: wait_for
-                host={{ item }}
+                host={{item}}
                 port=22
                 state=started
-  with_items: "{{master_public_ip}}"
+  with_items: "{{master_private_ip}}"
 
 - name: add master host
   add_host:
-    name: "{{ master_public_ip}}"
+    name: "{{master_public_ip}}"
     groups: master
     instance_name: master
 
 - name: add master to created_vms group
   add_host:
-    name: "{{ item.ip }}"
+    name: "{{item.ip}}"
     groups: created_vms
-    instance_name: "{{ item.name }}"
+    instance_name: "{{item.name}}"
   with_items:
     - { name: 'master', ip: '{{master_public_ip}}' }
 
 - name: add master to created_nodes in-memory inventory group
   add_host:
-    name: "{{ item.ip }}"
+    name: "{{item.ip}}"
     groups: created_nodes
-    instance_name: "{{ item.name }}"
+    instance_name: "{{item.name}}"
   with_items:
     - { name: 'master', ip: '{{master_public_ip}}' }

@@ -50,29 +50,29 @@
 
 - name: wait for node ssh
   local_action: wait_for
-                host={{ item.public_ip }}
+                host={{item.private_ip}}
                 port=22
                 state=started
-  with_items: "{{ nodes }}"
+  with_items: "{{nodes}}"
 
 - name: add nodes to created_vms group
   add_host:
-    name: "{{ item.public_ip }}"
+    name: "{{item.public_ip}}"
     groups: created_vms
     instance_name: "node{{ item.index }}"
-  with_items: "{{ nodes }}"
+  with_items: "{{nodes}}"
 
 - name: add nodes to created_nodes group
   add_host:
-    name: "{{ item.public_ip }}"
+    name: "{{item.public_ip}}"
     groups: created_nodes
-    instance_name: "node{{ item.index }}"
-  with_items: "{{ nodes }}"
+    instance_name: "node{{item.index}}"
+  with_items: "{{nodes}}"
 
 - name: add gluster hosts
   add_host:
-    name: "{{ item.public_ip }}"
+    name: "{{item.public_ip}}"
     groups: gluster
-    instance_name: "{{ item.index}}"
+    instance_name: "{{item.index}}"
   with_items: "{{nodes[0:3]}}"
   when: install_gluster
