@@ -46,7 +46,7 @@
   with_items: "{{ec2_nodes.results}}"
 
 # - name: node ip provisioned
-#   debug: msg="{{ nodes }}"
+#   debug: msg="{{nodes}}"
 
 - name: wait for node ssh
   local_action: wait_for
@@ -55,21 +55,21 @@
                 state=started
   with_items: "{{nodes}}"
 
-- name: add nodes to created_vms group
+- name: add nodes to created_vms in-memory inventory group
   add_host:
     name: "{{item.private_ip}}"
     groups: created_vms
     instance_name: "node{{ item.index }}"
   with_items: "{{nodes}}"
 
-- name: add nodes to created_nodes group
+- name: add nodes to created_nodes in-memory inventory group
   add_host:
     name: "{{item.private_ip}}"
     groups: created_nodes
     instance_name: "node{{item.index}}"
   with_items: "{{nodes}}"
 
-- name: add gluster hosts
+- name: add nodes to gluster in-memory inventory group
   add_host:
     name: "{{item.private_ip}}"
     groups: gluster
