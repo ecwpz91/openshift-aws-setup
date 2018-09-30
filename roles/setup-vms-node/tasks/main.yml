@@ -57,21 +57,21 @@
 
 - name: add nodes to created_vms group
   add_host:
-    name: "{{item.public_ip}}"
+    name: "{{item.private_ip}}"
     groups: created_vms
     instance_name: "node{{ item.index }}"
   with_items: "{{nodes}}"
 
 - name: add nodes to created_nodes group
   add_host:
-    name: "{{item.public_ip}}"
+    name: "{{item.private_ip}}"
     groups: created_nodes
     instance_name: "node{{item.index}}"
   with_items: "{{nodes}}"
 
 - name: add gluster hosts
   add_host:
-    name: "{{item.public_ip}}"
+    name: "{{item.private_ip}}"
     groups: gluster
     instance_name: "{{item.index}}"
   with_items: "{{nodes[0:3]}}"

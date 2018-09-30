@@ -48,7 +48,7 @@
 
 - name: add master host
   add_host:
-    name: "{{master_public_ip}}"
+    name: "{{master_private_ip}}"
     groups: master
     instance_name: master
 
@@ -58,7 +58,7 @@
     groups: created_vms
     instance_name: "{{item.name}}"
   with_items:
-    - { name: 'master', ip: '{{master_public_ip}}' }
+    - { name: 'master', ip: '{{master_private_ip}}' }
 
 - name: add master to created_nodes in-memory inventory group
   add_host:
@@ -66,4 +66,4 @@
     groups: created_nodes
     instance_name: "{{item.name}}"
   with_items:
-    - { name: 'master', ip: '{{master_public_ip}}' }
+    - { name: 'master', ip: '{{master_private_ip}}' }
