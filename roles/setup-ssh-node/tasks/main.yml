@@ -25,7 +25,7 @@
   replace:
     dest: /etc/hostname
     regexp: '.*'
-    replace: 'node{{item.index}}.{{dns_zone}}'
+    replace: '{{item.private_dns_name}}'
     backup: yes
   register: task_result
   delegate_to: "{{item.private_ip}}"
@@ -36,7 +36,7 @@
 
 - name: set system hostname
   hostname:
-    name: "node{{item.index}}.{{dns_zone}}"
+    name: "{{item.private_dns_name}}"
   delegate_to: "{{item.private_ip}}"
   remote_user: "{{amazon_user}}"
   with_items:
@@ -47,7 +47,7 @@
   lineinfile:
     dest: /etc/hosts
     regexp: '^127\.0\.0\.1'
-    line: '127.0.0.1   node{{item.index}}.{{dns_zone}} localhost localhost.localdomain localhost4 localhost4.localdomain4'
+    line: '127.0.0.1   {{item.private_dns_name}} localhost localhost.localdomain localhost4 localhost4.localdomain4'
   delegate_to: "{{item.private_ip}}"
   remote_user: "{{amazon_user}}"
   with_items:

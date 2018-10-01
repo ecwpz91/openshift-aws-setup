@@ -31,6 +31,7 @@
   set_fact:
    bastion_private_ip: "{{ec2_bastion['tagged_instances'][0]['private_ip']}}"
    bastion_public_ip: "{{ec2_bastion['tagged_instances'][0]['public_ip']}}"
+   bastion_private_dns_name: "{{ec2_bastion['tagged_instances'][0]['private_dns_name']}}"
 
 - name: wait for bastion ssh
   local_action: wait_for

@@ -27,7 +27,7 @@
   replace:
     dest: /etc/hostname
     regexp: '.*'
-    replace: 'bastion.{{dns_zone}}'
+    replace: '{{bastion_private_dns_name}}'
     backup: yes
   register: task_result
   delegate_to: "{{bastion_public_ip}}"
@@ -36,7 +36,7 @@
 
 - name: set system hostname
   hostname:
-    name: "bastion.{{dns_zone}}"
+    name: "{{bastion_private_dns_name}}"
   delegate_to: "{{bastion_public_ip}}"
   remote_user: "{{amazon_user}}"
   become: true
@@ -45,7 +45,7 @@
   lineinfile:
     dest: /etc/hosts
     regexp: '^127\.0\.0\.1'
-    line: '127.0.0.1   bastion.{{dns_zone}} localhost localhost.localdomain localhost4 localhost4.localdomain4'
+    line: '127.0.0.1   {{bastion_private_dns_name}} localhost localhost.localdomain localhost4 localhost4.localdomain4'
   delegate_to: "{{bastion_public_ip}}"
   remote_user: "{{amazon_user}}"
   become: true
