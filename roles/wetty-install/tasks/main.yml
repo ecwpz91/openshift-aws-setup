@@ -107,18 +107,6 @@
   become: true
   notify: wetty
 
-- name: install python passlib
-  pip: name=passlib state=present
-  become: true
-
-- name: set ec2-user password
-  user:
-    name: "{{amazon_user}}"
-    password: "{{ amazon_password | password_hash('sha512') }}"
-    state: present
-    append: yes
-  become: true
-
 - name: update ssh config
   copy:
     src: sshd_config

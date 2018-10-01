@@ -21,7 +21,12 @@
   become: true
   when: create_generic_user
 
-- name: Add cockpit password
+- name: install python passlib
+  pip: name=passlib state=present
+  become: true
+  when: cockpit_password is defined and cockpit_password|length>0
+
+- name: Add "{{amazon_user}}" password
   user:
     name: "{{amazon_user}}"
     password: "{{ cockpit_password | password_hash('sha512') }}"
