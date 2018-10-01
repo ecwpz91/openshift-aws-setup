@@ -40,7 +40,7 @@
       - "atomic-openshift-utils"
     state: "present"
   become: true
-  when: (ocp_version | string) == "3.9"
+  when: ocp_version|version_compare('3.9', '<=')
 
 - name: install openshift-ansible
   yum:
@@ -48,7 +48,7 @@
       - "openshift-ansible"
     state: "present"
   become: true
-  when: (ocp_version | string) == "3.10"
+  when: ocp_version|version_compare('3.10', '<=')
 
 - name: stop ntp service
   service: name=ntpd state=stopped
