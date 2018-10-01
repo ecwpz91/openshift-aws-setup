@@ -254,4 +254,4 @@
 
 - name: wait for host to come back
   pause:
-    minutes: 2
+    minutes: "{{reboot_wait_time}}"
