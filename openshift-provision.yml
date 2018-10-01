@@ -76,6 +76,12 @@
   - {role: generate-ssl-certs, when: use_lets_encrypt }
 
   post_tasks:
+   - name: create directory for certs
+     file: path=certs/{{public_master_dns}} state=directory
+
+   - name: create directory for certs
+     file: path=certs/{{public_subdomain_prefix}}.{{public_dns_zone}} state=directory
+
    - name: copy master ssl certificates
      copy:
        src: "{{item}}"
