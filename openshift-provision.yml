@@ -32,16 +32,16 @@
     - fail: msg="Variables required to register subscriptions are missing, please confirm that either rhsm_username, rhsm_password and rhsm_pool OR rhsm_key_id and rhsm_org_id is defined"
       when: (deployment_type == 'openshift-enterprise') and not (((rhsm_username is defined) and (rhsm_password is defined) and (rhsm_pool is defined)) or ((rhsm_key_id is defined) and (rhsm_org_id is defined)))
 
-  post_tasks:
-      - name: insert/update inventory
-        blockinfile:
-          path: inventory/inventory.cfg
-          block: |
-            [bastion]
-            bastion ansible_ssh_host={{bastion_public_ip}} ansible_user={{amazon_user}}
-
-            [created_vms]
-            bastion ansible_ssh_host={{bastion_public_ip}} ansible_user={{amazon_user}}
+  # post_tasks:
+  #     - name: insert/update inventory
+  #       blockinfile:
+  #         path: inventory/inventory.cfg
+  #         block: |
+  #           [bastion]
+  #           bastion ansible_ssh_host={{bastion_public_ip}} ansible_user={{amazon_user}}
+  #
+  #           [created_vms]
+  #           bastion ansible_ssh_host={{bastion_public_ip}} ansible_user={{amazon_user}}
 
 #############################################################
 # Register & Update Virtual Machines
