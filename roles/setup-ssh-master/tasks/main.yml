@@ -48,15 +48,6 @@
   remote_user: "{{amazon_user}}"
   become: true
 
-- name: set fully qualified domain name
-  lineinfile:
-    dest: /etc/hosts
-    regexp: '^127\.0\.0\.1'
-    line: '127.0.0.1   {{master_private_dns_name}} localhost localhost.localdomain localhost4 localhost4.localdomain4'
-  delegate_to: "{{master_private_ip}}"
-  remote_user: "{{amazon_user}}"
-  become: true
-
 - name: read system hostname
   shell: hostname -F /etc/hostname
   changed_when: false
