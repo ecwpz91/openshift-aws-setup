@@ -44,6 +44,6 @@
    msg: "Check file ~{{amazon_user}}/openshift-aws-setup/openshift-aws-setup.log in Bastion 'ssh {{amazon_user}}@{{bastion_public_ip}}'"
 
 - name: run openshift-aws-setup playbook
-  command: './openshift-playbook-run.sh -e rhsm_key_id={{rhsm_key_id}} -e rhsm_org_id={{rhsm_org_id}}   |& tee openshift-aws-setup.log'
+  command: './openshift-playbook-run.sh -e rhsm_key_id={{rhsm_key_id}} -e rhsm_org_id={{rhsm_org_id}} |& tee openshift-aws-setup.log'
   args:
    chdir: "~{{amazon_user}}/openshift-aws-setup"
