@@ -31,7 +31,6 @@
       - "libffi-devel"
       - "ansible"
     state: "present"
-  register: task_result
   become: true
   when: deployment_type == 'origin'
 
@@ -94,5 +93,5 @@
 
 - name: wait for host to come back
   pause:
-    minutes: 2
+    minutes: "{{reboot_wait_time}}"
   when: task_result is changed
