@@ -1,2 +1,7 @@
 DEVS=/dev/xvdb
 VG=docker-vg
+# To fix bug: https://bugzilla.redhat.com/show_bug.cgi?id=1568450#c7
+CONTAINER_ROOT_LV_MOUNT_PATH=/var/lib/docker
+CONTAINER_ROOT_LV_NAME=docker-root-lv
+STORAGE_DRIVER=overlay2
+CONTAINER_ROOT_LV_SIZE=100%FREE
